@@ -1,4 +1,4 @@
-const IDLE_MIN = 6; // сколько минут бот бездействует
+const IDLE_MIN = 5; // сколько минут бот бездействует
 
         const Menu = {
             $Ref: document.querySelector('a[href="#/ref"]'),
@@ -9,12 +9,14 @@ const IDLE_MIN = 6; // сколько минут бот бездействует
         }
 
         const PageSelectors = {
-            SelectPetButton: '._petModalButton_f3iay_805',
-            EnergyCounter: '._enegryCounter_f3iay_137',
-            ClickerButton: '._clickerButton_f3iay_318',
+            SelectPetButton: '._petModalButton_gar09_805',
+            EnergyCounter: '._enegryCounter_gar09_137',
+            ClickerButton: '._clickerButton_gar09_318',
+            ClickAmount: '._clickNumber_gar09_332',
         }
 
         let pets = [];
+        let currentPet = null;
 
         async function start() {
             pets = [];
@@ -25,7 +27,7 @@ const IDLE_MIN = 6; // сколько минут бот бездействует
                 await sleep(1000);
 
                 while (true) {
-                    console.log('Начнаю фармить за ' + pet.name);
+                    console.log('Начинаю фармить за ' + pet.name);
                     await goto('farm');
                     await sleep(1000);
                     const energyRechecked = await farm();
@@ -67,6 +69,9 @@ const IDLE_MIN = 6; // сколько минут бот бездействует
                 await sleep(randomInt(80, 170));
             }
 
+            currentPet.power = parseFloat(document.querySelector(PageSelectors.ClickAmount)?.innerText);
+            console.log('Бот ' + currentPet.name + ' добывает по ' + currentPet.power);
+
             return false;
         }
 
@@ -80,13 +85,14 @@ const IDLE_MIN = 6; // сколько минут бот бездействует
                 if (pet.name === botName) {
                     if (!botCard.querySelector('.boughtBotCheck')) {
                         botCard.click();
-                        await sleep(1000);
+                        await sleep(3000);
 
                         await waitForElement(PageSelectors.SelectPetButton);
                         document.querySelector(PageSelectors.SelectPetButton).click();
-                        await sleep(3000);
+                        await sleep(6000);
                         return selectPet(pet);
                     } else {
+                        currentPet = pet;
                         return true;
                     }
                 }
@@ -100,17 +106,26 @@ const IDLE_MIN = 6; // сколько минут бот бездействует
             for (const botCard of botCards) {
                 pets.push({
                     name: botCard.querySelector('.BotName').innerText,
+                    power: 0, // сколько добывается за клик
                 });
             }
-
-            console.log('Мои питомцы:', pets);
         }
 
         async function goto(page) {
             if (page === 'bots') {
                 Menu.$Bots.click();
                 await sleep(1000);
-                await waitForElement('.botsList');
+
+                try {
+                    await Promise.any([
+                        waitForElement('.botsList'),
+                        new Promise((res, rej) => setTimeout(rej, 30_000))
+                    ]);
+                } catch (e) {
+                    console.error('Ошибка ожидания питомцев. ');
+                    await goto('farm');
+                    return goto('bots');
+                }
             }
 
             if (page === 'farm') {
