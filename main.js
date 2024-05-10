@@ -1,151 +1,175 @@
 const IDLE_MIN = 5; // сколько минут бот бездействует
 
-        const Menu = {
-            $Ref: document.querySelector('a[href="#/ref"]'),
-            $Tasks: document.querySelector('a[href="#/tasks"]'),
-            $Farm: document.querySelector('a[href="#/"]'),
-            $Boost: document.querySelector('a[href="#/boost"]'),
-            $Bots: document.querySelector('a[href="#/bots"]'),
-        }
+const Menu = {
+  $Ref: document.querySelector('a[href="#/ref"]'),
+  $Tasks: document.querySelector('a[href="#/tasks"]'),
+  $Farm: document.querySelector('a[href="#/"]'),
+  $Boost: document.querySelector('a[href="#/boost"]'),
+  $Bots: document.querySelector('a[href="#/bots"]'),
+};
 
-        const PageSelectors = {
-            SelectPetButton: '._petModalButton_gar09_805',
-            EnergyCounter: '._enegryCounter_gar09_137',
-            ClickerButton: '._clickerButton_gar09_318',
-            ClickAmount: '._clickNumber_gar09_332',
-        }
+const PageSelectors = {
+  SelectPetButton: "._petModalButton_{reactPrefix}_805",
+  EnergyCounter: "._enegryCounter_{reactPrefix}_137",
+  ClickerButton: "._clickerButton_{reactPrefix}_318",
+  ClickAmount: "._clickNumber_{reactPrefix}_332",
+};
 
-        let pets = [];
-        let currentPet = null;
+let pets = [];
+let currentPet = null;
 
-        async function start() {
-            pets = [];
-            await loadPets();
+async function start() {
+  loadReactPrefix();
 
-            for (const pet of pets) {
-                await selectPet(pet);
-                await sleep(1000);
+  pets = [];
+  await loadPets();
 
-                while (true) {
-                    console.log('Начинаю фармить за ' + pet.name);
-                    await goto('farm');
-                    await sleep(1000);
-                    const energyRechecked = await farm();
-                    await sleep(2000);
+  for (const pet of pets) {
+    await selectPet(pet);
+    await sleep(1000);
 
-                    if (energyRechecked) {
-                        console.log('Фарм за ' + pet.name + ' закончен');
-                        break;
-                    }
+    while (true) {
+      console.log("Начинаю фармить за " + pet.name);
+      await goto("farm");
+      await sleep(1000);
+      const energyRechecked = await farm();
+      await sleep(2000);
 
-                    console.log('Перепроверка потраченной энергии');
-                    await goto('bots');
-                    await sleep(2000);
-                }
+      if (energyRechecked) {
+        console.log("Фарм за " + pet.name + " закончен");
+        break;
+      }
 
-            }
+      console.log("Перепроверка потраченной энергии");
+      await goto("bots");
+      await sleep(2000);
+    }
+  }
 
-            console.log('Жду ' + IDLE_MIN + ' минут..');
+  console.log("Жду " + IDLE_MIN + " минут..");
 
-            await sleep(IDLE_MIN * 60_000);
+  await sleep(IDLE_MIN * 60_000);
 
-            start();
-        }
+  start();
+}
 
-        start();
+start();
 
-        async function farm() {
-            await waitForElement(PageSelectors.ClickerButton);
-            const clickerBtn = document.querySelector(PageSelectors.ClickerButton);
+function loadReactPrefix() {
+  const containerClass = document.querySelector("#root > div > div").className; // _container_1n9vr_1
 
-            const currentEnergy = document.querySelector(PageSelectors.EnergyCounter).innerText.split('/').map(e => Number(e));
+  const arr = containerClass.split("_");
 
-            if (currentEnergy[0] < 20) {
-                return true;
-            }
+  const reactCustomClassPrefix = arr[arr.length - 2];
 
-            for (let i = 0; i < currentEnergy[0] - 10; i++) {
-                clickerBtn.click();
-                await sleep(randomInt(80, 170));
-            }
+  console.log("reactPrefix:", reactCustomClassPrefix);
 
-            currentPet.power = parseFloat(document.querySelector(PageSelectors.ClickAmount)?.innerText);
-            console.log('Бот ' + currentPet.name + ' добывает по ' + currentPet.power);
+  for (const key in PageSelectors) {
+    PageSelectors[key] = PageSelectors[key].replace(
+      "{reactPrefix}",
+      reactCustomClassPrefix,
+    );
+  }
+}
 
-            return false;
-        }
+async function farm() {
+  await waitForElement(PageSelectors.ClickerButton);
+  const clickerBtn = document.querySelector(PageSelectors.ClickerButton);
 
-        async function selectPet(pet) {
-            await goto('bots');
+  const currentEnergy = document
+    .querySelector(PageSelectors.EnergyCounter)
+    .innerText.split("/")
+    .map((e) => Number(e));
 
-            const botCards = document.getElementsByClassName('botCard');
-            for (const botCard of botCards) {
-                const botName = botCard.querySelector('.BotName').innerText;
+  if (currentEnergy[0] < 20) {
+    return true;
+  }
 
-                if (pet.name === botName) {
-                    if (!botCard.querySelector('.boughtBotCheck')) {
-                        botCard.click();
-                        await sleep(3000);
+  for (let i = 0; i < currentEnergy[0] - 10; i++) {
+    clickerBtn.click();
+    await sleep(randomInt(80, 170));
+  }
 
-                        await waitForElement(PageSelectors.SelectPetButton);
-                        document.querySelector(PageSelectors.SelectPetButton).click();
-                        await sleep(6000);
-                        return selectPet(pet);
-                    } else {
-                        currentPet = pet;
-                        return true;
-                    }
-                }
-            }
-        }
+  currentPet.power = parseFloat(
+    document.querySelector(PageSelectors.ClickAmount)?.innerText,
+  );
+  console.log("Бот " + currentPet.name + " добывает по " + currentPet.power);
 
-        async function loadPets() {
-            await goto('bots');
+  return false;
+}
 
-            const botCards = document.getElementsByClassName('botCard');
-            for (const botCard of botCards) {
-                pets.push({
-                    name: botCard.querySelector('.BotName').innerText,
-                    power: 0, // сколько добывается за клик
-                });
-            }
-        }
+async function selectPet(pet) {
+  await goto("bots");
 
-        async function goto(page) {
-            if (page === 'bots') {
-                Menu.$Bots.click();
-                await sleep(1000);
+  const botCards = document.getElementsByClassName("botCard");
+  for (const botCard of botCards) {
+    const botName = botCard.querySelector(".BotName").innerText;
 
-                try {
-                    await Promise.any([
-                        waitForElement('.botsList'),
-                        new Promise((res, rej) => setTimeout(rej, 30_000))
-                    ]);
-                } catch (e) {
-                    console.error('Ошибка ожидания питомцев. ');
-                    await goto('farm');
-                    return goto('bots');
-                }
-            }
+    if (pet.name === botName) {
+      if (!botCard.querySelector(".boughtBotCheck")) {
+        botCard.click();
+        await sleep(3000);
 
-            if (page === 'farm') {
-                Menu.$Farm.click();
-                await sleep(1000);
-                await waitForElement(PageSelectors.EnergyCounter);
-            }
-        }
-        async function waitForElement(selector) {
-            while (true) {
-                if (document.querySelector(selector)) break;
+        await waitForElement(PageSelectors.SelectPetButton);
+        document.querySelector(PageSelectors.SelectPetButton).click();
+        await sleep(6000);
+        return selectPet(pet);
+      } else {
+        currentPet = pet;
+        return true;
+      }
+    }
+  }
+}
 
-                await sleep(500);
-            }
-        }
+async function loadPets() {
+  await goto("bots");
 
-        function sleep(ms) {
-            return new Promise(res => setTimeout(res, ms));
-        }
+  const botCards = document.getElementsByClassName("botCard");
+  for (const botCard of botCards) {
+    pets.push({
+      name: botCard.querySelector(".BotName").innerText,
+      power: 0, // сколько добывается за клик
+    });
+  }
+}
 
-        function randomInt(min, max) {
-            return Math.floor(Math.random() * (max - min + 1)) + min;
-        }
+async function goto(page) {
+  if (page === "bots") {
+    Menu.$Bots.click();
+    await sleep(1000);
+
+    try {
+      await Promise.any([
+        waitForElement(".botsList"),
+        new Promise((res, rej) => setTimeout(rej, 30_000)),
+      ]);
+    } catch (e) {
+      console.error("Ошибка ожидания питомцев. ");
+      await goto("farm");
+      return goto("bots");
+    }
+  }
+
+  if (page === "farm") {
+    Menu.$Farm.click();
+    await sleep(1000);
+    await waitForElement(PageSelectors.EnergyCounter);
+  }
+}
+
+async function waitForElement(selector) {
+  while (true) {
+    if (document.querySelector(selector)) break;
+
+    await sleep(500);
+  }
+}
+
+function sleep(ms) {
+  return new Promise((res) => setTimeout(res, ms));
+}
+
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
