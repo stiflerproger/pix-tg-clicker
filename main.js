@@ -9,18 +9,16 @@ const Menu = {
 };
 
 const PageSelectors = {
-  SelectPetButton: "._petModalButton_{reactPrefix}_805",
-  EnergyCounter: "._enegryCounter_{reactPrefix}_137",
-  ClickerButton: "._clickerButton_{reactPrefix}_318",
-  ClickAmount: "._clickNumber_{reactPrefix}_332",
+  SelectPetButton: "[class*=_petModalButton_]",
+  EnergyCounter: "[class*=_enegryCounter_]",
+  ClickerButton: "[class*=_clickerButton_]",
+  ClickAmount: "[class*=_clickNumber_]",
 };
 
 let pets = [];
 let currentPet = null;
 
 async function start() {
-  loadReactPrefix();
-
   pets = [];
   await loadPets();
 
@@ -54,23 +52,6 @@ async function start() {
 }
 
 start();
-
-function loadReactPrefix() {
-  const containerClass = document.querySelector("#root > div > div").className; // _container_1n9vr_1
-
-  const arr = containerClass.split("_");
-
-  const reactCustomClassPrefix = arr[arr.length - 2];
-
-  console.log("reactPrefix:", reactCustomClassPrefix);
-
-  for (const key in PageSelectors) {
-    PageSelectors[key] = PageSelectors[key].replace(
-      "{reactPrefix}",
-      reactCustomClassPrefix,
-    );
-  }
-}
 
 async function farm() {
   await waitForElement(PageSelectors.ClickerButton);
