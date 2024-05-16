@@ -5,14 +5,16 @@ const Menu = {
   $Tasks: document.querySelector('a[href="#/tasks"]'),
   $Farm: document.querySelector('a[href="#/"]'),
   $Boost: document.querySelector('a[href="#/boost"]'),
-  $Bots: document.querySelector('a[href="#/bots"]'),
+  //$Bots: document.querySelector('a[href="#/bots"]'),
 };
 
 const PageSelectors = {
-  SelectPetButton: "[class*=_petModalButton_]",
-  EnergyCounter: "[class*=_enegryCounter_]",
-  ClickerButton: "[class*=_clickerButton_]",
-  ClickAmount: "[class*=_clickNumber_]",
+  SelectPetButton: "[class^=_petModalButton_]",
+  EnergyCounter: "[class^=_enegryCounter_]",
+  ClickerButton: "[class^=_clickerButton_]",
+  ClickAmount: "[class^=_clickNumber_]",
+  ExpandMoreMenuButton: "[class^=_navList_] > li > div",
+  BotsMenuButton: 'a[href="#/bots"]',
 };
 
 let pets = [];
@@ -117,7 +119,9 @@ async function loadPets() {
 
 async function goto(page) {
   if (page === "bots") {
-    Menu.$Bots.click();
+    document.querySelector(PageSelectors.ExpandMoreMenuButton).click();
+    await sleep(1000);
+    document.querySelector(PageSelectors.BotsMenuButton).click();
     await sleep(1000);
 
     try {
