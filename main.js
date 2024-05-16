@@ -11,10 +11,10 @@ const Menu = {
 const PageSelectors = {
   SelectPetButton: "[class^=_petModalButton_]",
   EnergyCounter: "[class^=_enegryCounter_]",
-  ClickerButton: "[class^=_clickerButton_]",
   ClickAmount: "[class^=_clickNumber_]",
   ExpandMoreMenuButton: "[class^=_navList_] > li > div",
   BotsMenuButton: 'a[href="#/bots"]',
+  ClickableCircle: ".clickBackdrop",
 };
 
 let pets = [];
@@ -56,8 +56,9 @@ async function start() {
 start();
 
 async function farm() {
-  await waitForElement(PageSelectors.ClickerButton);
-  const clickerBtn = document.querySelector(PageSelectors.ClickerButton);
+  await waitForElement(PageSelectors.EnergyCounter);
+
+  let clickCoords = { x: 0, y: 0 };
 
   const currentEnergy = document
     .querySelector(PageSelectors.EnergyCounter)
@@ -69,7 +70,40 @@ async function farm() {
   }
 
   for (let i = 0; i < currentEnergy[0] - 10; i++) {
-    clickerBtn.click();
+    if (
+      (!clickCoords.x && !clickCoords.y) ||
+      document.querySelector(PageSelectors.ClickableCircle)
+    ) {
+      await waitForElement(PageSelectors.ClickableCircle);
+
+      const coords = document
+        .querySelector(PageSelectors.ClickableCircle)
+        .getBoundingClientRect();
+
+      clickCoords = {
+        x: randomInt(
+          Math.floor(coords.left + 1),
+          Math.floor(coords.left + coords.width - 1),
+        ),
+        y: randomInt(
+          Math.floor(coords.top + 1),
+          Math.floor(coords.top + coords.height - 1),
+        ),
+      };
+
+      await sleep(randomInt(250, 550));
+    }
+
+    let event = new MouseEvent("click", {
+      bubbles: true,
+      cancelable: true,
+      clientX: clickCoords.x,
+      clientY: clickCoords.y,
+    });
+
+    document
+      .elementFromPoint(clickCoords.x, clickCoords.y)
+      ?.dispatchEvent(event);
     await sleep(randomInt(80, 170));
   }
 
