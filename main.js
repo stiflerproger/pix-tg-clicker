@@ -12,7 +12,7 @@ const PageSelectors = {
   SelectPetButton: "[class^=_petModalButton_]",
   EnergyCounter: "[class^=_enegryCounter_]",
   ClickAmount: "[class^=_clickNumber_]",
-  ExpandMoreMenuButton: "[class^=_navList_] > li > div",
+  ExpandMoreMenuButton: "[class^=_navList_] > li:last-child > div",
   BotsMenuButton: 'a[href="#/bots"]',
   ClickableCircle: ".clickBackdrop",
 };
